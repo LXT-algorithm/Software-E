@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>TRIP3 · 智能旅游规划平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Tailwind CSS Play CDN (preflight disabled to not break existing styles) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            corePlugins: { preflight: false },
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        'primary-dark': '#2563eb',
+                        accent: '#7c3aed',
+                        'accent-cyan': '#06b6d4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Homepage wave gradient background */
+        .hero-wave-bg {
+            background: linear-gradient(135deg, #eef5ff 0%, #f3eeff 40%, #e8f4f8 70%, #f0eeff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-wave-bg::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 120'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,64L48,74.7C96,85,192,107,288,101.3C384,96,480,64,576,58.7C672,53,768,75,864,80C960,85,1056,75,1152,64C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z'/%3E%3C/svg%3E") no-repeat bottom;
+            background-size: cover;
+        }
+        .hero-card {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        .feature-card {
+            background: #ffffff;
+            border: 1px solid #f0f0f0;
+            border-radius: 16px;
+            padding: 20px 16px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+        .feature-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            transform: translateY(-4px);
+            border-color: #e0e0e0;
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- ========== 侧边栏 ========== -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-compass"></i>
+            <div>
+                <h3 id="sidebarUserName">旅游规划助手</h3>
+                <p id="sidebarUserStatus">未登录</p>
+            </div>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item" onclick="showPanel('home')"><i class="fas fa-home"></i> 首页</div>
+            <div class="menu-item" onclick="showPanel('chat')"><i class="fas fa-comment-dots"></i> 智能对话</div>
+            <div class="menu-item" onclick="showPanel('scenery')"><i class="fas fa-mountain"></i> 景点搜索</div>
+            <div class="menu-item" onclick="showPanel('history')"><i class="fas fa-history"></i> 历史行程</div>
+            <div class="menu-item" onclick="showPanel('community')"><i class="fas fa-globe-asia"></i> 社区行程</div>
+            <div class="menu-item" onclick="showPanel('favorites')"><i class="fas fa-heart"></i> 我的收藏</div>
+            <div class="menu-item" onclick="showPanel('friend')"><i class="fas fa-user-friends"></i> 好友</div>
+            <div class="menu-item" onclick="showPanel('stats')"><i class="fas fa-chart-bar"></i> 旅行统计</div>
+            <div class="menu-item" onclick="showPanel('profile')"><i class="fas fa-user"></i> 个人资料</div>
+            <div class="menu-item" onclick="showPanel('preferences')"><i class="fas fa-sliders-h"></i> 偏好设置</div>
+            <hr>
+            <div class="menu-item" onclick="toggleDarkMode()"><i class="fas fa-moon" id="darkModeIcon"></i> <span id="darkModeText">暗色模式</span></div>
+            <hr>
+            <div class="menu-item" id="loginMenuItem" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> 登录/注册</div>
+            <div class="menu-item" id="logoutMenuItem" onclick="logout()" style="display:none"><i class="fas fa-sign-out-alt"></i> 退出登录</div>
+        </div>
+    </div>
+
+    <!-- ========== 主内容 ========== -->
+    <div class="main-content">
+        <!-- 顶部导航 (半透明风格) -->
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <a class="brand" href="javascript:showPanel('home')">
+                    <i class="fas fa-compass"></i>
+                    <span>TRIP3</span>
+                </a>
+            </div>
+            <div class="top-nav-center">
+                <a href="#" onclick="showPanel('home');return false;" style="font-weight:600;">首页</a>
+                <a href="#" onclick="showPanel('chat');return false;">旅程规划</a>
+                <a href="#" onclick="showPanel('scenery');return false;">景点搜索</a>
+                <a href="#" onclick="showPanel('community');return false;">社区</a>
+                <a href="#" onclick="showPanel('history');return false;">历史行程</a>
+            </div>
+            <div class="user-section">
+                <button id="darkModeToggle" onclick="toggleDarkMode()" title="切换暗色模式"><i class="fas fa-moon"></i></button>
+                <span id="userNameDisplay">游客模式</span>
+                <div class="avatar" onclick="showLoginModal()" id="avatarBtn">
+                    <img id="userAvatarImg" src="" alt="" style="width:100%; height:100%; border-radius:50%; object-fit:cover; display:none;">
+                    <i id="userAvatarIcon" class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 首页面板 (Homepage) ========== -->
+        <div id="homePanel" class="home-active">
+            <!-- 首屏主视觉 -->
+            <div class="hero-wave-bg" style="padding:60px 40px 80px;min-height:480px;">
+                <div style="max-width:1100px;margin:0 auto;display:flex;gap:48px;align-items:stretch;flex-wrap:wrap;">
+                    <!-- 左侧文案 -->
+                    <div style="flex:1.3;min-width:300px;display:flex;flex-direction:column;justify-content:center;">
+                        <span style="display:inline-block;background:rgba(124,58,237,0.1);color:#7c3aed;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:500;margin-bottom:20px;width:fit-content;">
+                            <i class="fas fa-robot" style="margin-right:6px;"></i>AI智能出行 · 轻松规划旅途
+                        </span>
+                        <h1 style="font-size:44px;font-weight:700;line-height:1.2;color:#1a1a2e;margin-bottom:16px;">
+                            开启全新<br><span style="background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">智慧旅行</span>新体验
+                        </h1>
+                        <p style="font-size:16px;color:#666;line-height:1.7;margin-bottom:28px;max-width:480px;">
+                            TRIP3 智能旅游规划平台，为您提供AI行程规划、景点推荐、<br>
+                            路线优化、旅行攻略一站式服务，让每一次出行都完美无忧。
+                        </p>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <button onclick="showPanel('chat')" style="display:flex;align-items:center;gap:8px;padding:14px 32px;background:linear-gradient(135deg,#7c3aed,#6366f1);color:#fff;border:none;border-radius:999px;font-size:16px;font-weight:500;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,0.3);transition:all 0.2s;">
+                                <i class="fas fa-rocket"></i> 立即探索
+                            </button>
+                            <button onclick="showPanel('scenery')" style="display:flex;align-items:center;gap:8px;padding:14px 28px;background:#fff;color:#444;border:1px solid #ddd;border-radius:999px;font-size:16px;font-weight:500;cursor:pointer;transition:all 0.2s;">
+                                <i class="fas fa-search"></i> 了解更多
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧数据卡片 -->
+                    <div style="flex:1;min-width:280px;display:flex;align-items:stretch;">
+                        <div class="hero-card" style="flex:1;border-radius:20px;padding:24px;display:flex;flex-direction:column;">
+                            <!-- 顶部4个数据模块 -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                                <div style="background:#f5f3ff;border-radius:14px;padding:14px;text-align:center;">
+                                    <div style="font-size:26px;font-weight:700;color:#7c3aed;">50+</div>
+                                    <div style="font-size:12px;color:#888;margin-top:2px;">热门目的地</div>
+                                </div>
+                                <div style="background:#fef3f2;border-radius:14px;padding:14px;text-align:center;">
+                                    <div style="font-size:26px;font-weight:700;color:#3b82f6;">10K+</div>
+                                    <div style="font-size:12px;color:#888;margin-top:2px;">出行人次</div>
+                                </div>
+                                <div style="background:#eef9ff;border-radius:14px;padding:14px;text-align:center;">
+                                    <div style="font-size:26px;font-weight:700;color:#06b6d4;">3000+</div>
+                                    <div style="font-size:12px;color:#888;margin-top:2px;">攻略数量</div>
+                                </div>
+                                <div style="background:#ecfdf5;border-radius:14px;padding:14px;text-align:center;">
+                                    <div style="font-size:26px;font-weight:700;color:#10b981;">98%</div>
+                                    <div style="font-size:12px;color:#888;margin-top:2px;">服务好评</div>
+                                </div>
+                            </div>
+                            <!-- 下方图表区 -->
+                            <div style="display:flex;gap:12px;flex:1;align-items:stretch;">
+                                <!-- 迷你折线图 -->
+                                <div style="flex:1;background:#fafafa;border-radius:12px;padding:12px;border:1px solid #f0f0f0;display:flex;flex-direction:column;justify-content:center;">
+                                    <div style="font-size:11px;color:#999;margin-bottom:6px;"><i class="fas fa-chart-line" style="color:#7c3aed;"></i> 旅游热度趋势</div>
+                                    <svg viewBox="0 0 120 40" style="width:100%;height:50px;">
+                                        <polyline points="0,35 15,28 30,30 45,18 60,22 75,10 90,14 105,8 120,12"
+                                            fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <circle cx="105" cy="8" r="3" fill="#7c3aed"/>
+                                    </svg>
+                                </div>
+                                <!-- 目的地关联图 + 机器人 -->
+                                <div style="flex:1;background:#fafafa;border-radius:12px;padding:12px;border:1px solid #f0f0f0;position:relative;display:flex;flex-direction:column;justify-content:center;">
+                                    <div style="font-size:11px;color:#999;margin-bottom:6px;"><i class="fas fa-project-diagram" style="color:#06b6d4;"></i> 目的地关联</div>
+                                    <svg viewBox="0 0 120 40" style="width:100%;height:50px;">
+                                        <circle cx="20" cy="20" r="5" fill="#7c3aed" opacity="0.6"/>
+                                        <circle cx="60" cy="10" r="4" fill="#06b6d4" opacity="0.7"/>
+                                        <circle cx="60" cy="30" r="4" fill="#3b82f6" opacity="0.6"/>
+                                        <circle cx="100" cy="20" r="5" fill="#f59e0b" opacity="0.6"/>
+                                        <line x1="20" y1="20" x2="60" y2="10" stroke="#ddd" stroke-width="1"/>
+                                        <line x1="20" y1="20" x2="60" y2="30" stroke="#ddd" stroke-width="1"/>
+                                        <line x1="60" y1="10" x2="100" y2="20" stroke="#ddd" stroke-width="1"/>
+                                        <line x1="60" y1="30" x2="100" y2="20" stroke="#ddd" stroke-width="1"/>
+                                    </svg>
+                                    <!-- 可爱机器人 -->
+                                    <div style="position:absolute;bottom:6px;right:8px;font-size:32px;opacity:0.8;animation:bounce 2s ease-in-out infinite;">🤖</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 功能模块 (2行4列) -->
+            <div style="max-width:1100px;margin:0 auto;padding:48px 40px 40px;">
+                <h2 style="text-align:center;font-size:26px;font-weight:700;color:#1a1a2e;margin-bottom:8px;">探索旅行新方式</h2>
+                <p style="text-align:center;color:#999;font-size:14px;margin-bottom:36px;">一站式智能旅游服务，让旅行更简单</p>
+                <div class="feature-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+                    <div class="feature-card" onclick="showPanel('scenery')">
+                        <div class="feature-icon" style="background:#f5f3ff;color:#7c3aed;"><i class="fas fa-map-marked-alt"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">目的地推荐</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">智能推荐热门目的地和特色景点</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('community')">
+                        <div class="feature-icon" style="background:#eef9ff;color:#06b6d4;"><i class="fas fa-book-open"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">旅游攻略库</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">海量真实旅行攻略和行程参考</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('chat')">
+                        <div class="feature-icon" style="background:#fef3f2;color:#3b82f6;"><i class="fas fa-robot"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">AI出行问答</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">AI智能解答您的所有旅行疑问</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('chat')">
+                        <div class="feature-icon" style="background:#ecfdf5;color:#10b981;"><i class="fas fa-route"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">智能行程规划</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">AI自动生成完美旅行计划</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon" style="background:#fff7ed;color:#f59e0b;"><i class="fas fa-ticket-alt"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">景区预约助手</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">景区信息查询和出行建议</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('chat')">
+                        <div class="feature-icon" style="background:#f0fdf4;color:#22c55e;"><i class="fas fa-route"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">路线智能匹配</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">智能匹配最优旅行路线方案</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('community')">
+                        <div class="feature-icon" style="background:#fdf2f8;color:#ec4899;"><i class="fas fa-share-alt"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">游记分享上传</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">分享您的精彩旅行故事</div>
+                    </div>
+                    <div class="feature-card" onclick="showPanel('profile')">
+                        <div class="feature-icon" style="background:#f5f5f5;color:#666;"><i class="fas fa-users-cog"></i></div>
+                        <div style="font-weight:600;color:#222;margin-bottom:4px;">出行用户管理</div>
+                        <div style="font-size:13px;color:#999;line-height:1.5;">个人资料、偏好和旅行统计</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部页脚 -->
+            <div style="background:#f9fafb;border-top:1px solid #f0f0f0;padding:40px 40px 24px;margin-top:48px;">
+                <div style="max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;">
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-size:18px;font-weight:700;color:#1a1a2e;margin-bottom:8px;"><i class="fas fa-compass" style="color:#3b82f6;"></i> TRIP3</div>
+                        <div style="font-size:13px;color:#999;line-height:1.6;">智能旅游规划平台 · AI驱动的一站式旅行解决方案</div>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:#444;margin-bottom:8px;font-size:14px;">关于我们</div>
+                        <div style="font-size:13px;color:#999;line-height:2;">
+                            <div>联系我们：support@trip3.ai</div>
+                            <div>隐私政策</div>
+                            <div>服务条款</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;color:#444;margin-bottom:8px;font-size:14px;">旅行服务</div>
+                        <div style="font-size:13px;color:#999;line-height:2;">
+                            <div>AI行程规划</div>
+                            <div>景点查询</div>
+                            <div>旅游攻略</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="max-width:1100px;margin:24px auto 0;padding-top:16px;border-top:1px solid #eee;text-align:center;font-size:12px;color:#bbb;">
+                    &copy; 2026 TRIP3. All rights reserved. 智能旅游规划平台
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 聊天面板 ========== -->
+        <div id="chatPanel" class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant">
+                    <div class="message-content">
+                        <p>你好！我是你的智能旅游规划师 🗺️</p>
+                        <br>
+                        <p>请告诉我你的旅行需求~</p>
+                        <br>
+                        <p>例如：<em>"北京3日游，2人，预算5000，喜欢历史文化"</em></p>
+                    </div>
+                </div>
+            </div>
+            <div class="style-selector">
+                <label><i class="fas fa-palette"></i> 风格：</label>
+                <select id="travelStyleSelect">
+                    <option value="标准">标准</option>
+                    <option value="紧凑">紧凑</option>
+                    <option value="休闲">休闲</option>
+                    <option value="小众">小众探秘</option>
+                </select>
+                <button class="btn btn-outline" style="margin-left:auto;height:32px;padding:4px 12px;font-size:12px;" onclick="clearHistory()"><i class="fas fa-eraser"></i> 清除记忆</button>
+            </div>
+            <div class="quick-prompts">
+                <div id="quickPromptChips" class="prompt-chips"></div>
+            </div>
+            <div class="quick-destinations">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:2px; width:100%;">
+                    <i class="fas fa-fire" style="color:var(--color-primary); font-size:14px;"></i>
+                    <span style="font:var(--text-caption); color:var(--color-muted);">热门目的地</span>
+                </div>
+                <div id="hotCityGrid" class="city-grid"></div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="messageInput" placeholder="输入你的旅行需求..." autocomplete="off">
+                <button id="sendBtn">发送 <i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <!-- ========== 景点搜索面板 ========== -->
+        <div id="sceneryPanel">
+            <div style="padding:16px">
+                <div id="weatherPanel" style="margin-bottom:16px; background:var(--color-surface-soft); border-radius:var(--radius-md); padding:16px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                        <i class="fas fa-cloud-sun" style="color:var(--color-primary);"></i>
+                        <span style="font:var(--text-title);">目的地天气</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="weatherCityInput" placeholder="输入城市名 (如: 北京)" style="flex:1; border:1px solid var(--color-hairline); border-radius:var(--radius-full); padding:10px 16px; font:var(--text-body); outline:none; background:var(--color-canvas);">
+                        <button class="btn btn-primary" style="border-radius:var(--radius-full);" onclick="searchWeather()"><i class="fas fa-search"></i> 查询天气</button>
+                    </div>
+                    <div id="weatherResult" style="margin-top:12px;"></div>
+                </div>
+                <div class="scenery-search-bar">
+                    <input type="text" id="sceneryKeyword" placeholder="搜索景点..." style="flex:2;">
+                    <input type="text" id="sceneryCity" placeholder="城市 (如: 北京)" style="flex:1;">
+                    <button onclick="searchScenery()" class="btn btn-primary" style="border-radius:var(--radius-full);"><i class="fas fa-search"></i> 搜索</button>
+                </div>
+                <div id="sceneryError" class="error-message" style="display:none;"></div>
+                <div id="sceneryList" class="scenery-grid">
+                    <div style="text-align:center; padding:60px 20px; color:var(--color-muted);"><i class="fas fa-search" style="font-size:32px; margin-bottom:12px; display:block;"></i>请输入关键词搜索景点</div>
+                </div>
+                <div id="loadMoreBtn" style="text-align:center; padding:20px; display:none">
+                    <button onclick="loadMore()" class="btn btn-outline"><i class="fas fa-arrow-down"></i> 加载更多</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 历史行程面板 ========== -->
+        <div id="historyPanel">
+            <h3>历史行程</h3>
+            <div id="historyList"></div>
+        </div>
+
+        <!-- ========== 收藏面板 ========== -->
+        <div id="favoritesPanel">
+            <h3>我的收藏</h3>
+            <div id="favoritesList"></div>
+        </div>
+
+        <!-- ========== 个人资料面板 ========== -->
+        <div id="profilePanel">
+            <h3>个人资料</h3>
+            <div id="profileContent"></div>
+        </div>
+
+        <!-- ========== 偏好设置面板 ========== -->
+        <div id="preferencesPanel">
+            <h3>偏好设置</h3>
+            <div id="preferencesContent"></div>
+        </div>
+
+        <!-- ========== 社区行程面板 ========== -->
+        <div id="communityPanel">
+            <div style="padding:16px;max-width:860px;margin:0 auto;">
+                <!-- 搜索栏 -->
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+                    <input type="text" id="communitySearchInput" placeholder="搜索行程标题..." style="flex:2; min-width:140px; border:1px solid var(--color-hairline); border-radius:var(--radius-full); padding:8px 14px; font-size:14px; outline:none; background:var(--color-canvas);">
+                    <input type="text" id="communityCityInput" placeholder="城市" style="flex:0 1 100px; border:1px solid var(--color-hairline); border-radius:var(--radius-full); padding:8px 14px; font-size:14px; outline:none; background:var(--color-canvas);">
+                    <button class="btn btn-primary" style="border-radius:var(--radius-full);height:38px;width:38px;padding:0;" onclick="searchCommunity()"><i class="fas fa-search"></i></button>
+                </div>
+                <!-- 排序 -->
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13px;">
+                    <span style="color:var(--color-muted);">排序:</span>
+                    <span id="sortHot" class="tag selected" onclick="setCommunitySort('hot')" style="cursor:pointer;">最多点赞</span>
+                    <span id="sortNew" class="tag" onclick="setCommunitySort('new')" style="cursor:pointer;">最新发布</span>
+                    <span style="flex:1;"></span>
+                    <span id="communityResultCount" style="color:var(--color-muted-soft);font-size:12px;"></span>
+                </div>
+                <!-- 热门目的地标签 -->
+                <div id="communityTags" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;"></div>
+                <!-- 行程卡片网格 -->
+                <div id="communityGrid" class="scenery-grid">
+                    <div style="text-align:center; padding:60px 20px; color:var(--color-muted);"><i class="fas fa-globe-asia" style="font-size:32px; margin-bottom:12px; display:block;"></i>加载中...</div>
+                </div>
+                <div id="communityLoadMore" style="text-align:center; padding:20px; display:none;">
+                    <button onclick="loadMoreCommunity()" class="btn btn-outline"><i class="fas fa-arrow-down"></i> 加载更多</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 旅行统计面板 ========== -->
+        <div id="statsPanel">
+            <div style="padding:16px;">
+                <h3 style="font:var(--text-display-lg);color:var(--color-ink);margin-bottom:var(--space-lg);">旅行统计</h3>
+                <div id="statsSummary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:12px; margin-bottom:24px;"></div>
+                <div class="stats-section">
+                    <h4><i class="fas fa-chart-bar" style="color:var(--color-primary);"></i> 月度行程趋势</h4>
+                    <div id="monthlyChart" class="chart-container"></div>
+                </div>
+                <div class="stats-section">
+                    <h4><i class="fas fa-star" style="color:var(--color-primary);"></i> 最喜爱目的地</h4>
+                    <div id="favoriteCitiesChart" class="chart-container"></div>
+                </div>
+                <div class="stats-section">
+                    <h4><i class="fas fa-chart-pie" style="color:var(--color-primary);"></i> 总预算分解</h4>
+                    <div id="budgetChartContainer"></div>
+                </div>
+                <div class="stats-section">
+                    <h4><i class="fas fa-clock" style="color:var(--color-primary);"></i> 最近活动</h4>
+                    <div id="activityTimeline"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 好友面板 ========== -->
+        <div id="friendPanel">
+            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+                <!-- 搜索添加好友 -->
+                <div style="background:var(--color-surface-soft);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-hairline-soft);">
+                    <h4 style="font:var(--text-title);color:var(--color-ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-user-plus" style="color:var(--color-primary);"></i> 添加好友
+                    </h4>
+                    <div style="position:relative;">
+                        <input type="text" id="searchUserInput" placeholder="搜索用户名或手机号..." oninput="searchUsers()"
+                            style="width:100%;border:1px solid var(--color-hairline);border-radius:var(--radius-full);padding:10px 16px;font:var(--text-body);outline:none;background:var(--color-canvas);">
+                        <div id="searchUserResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--color-canvas);border:1px solid var(--color-hairline);border-radius:var(--radius-sm);box-shadow:var(--shadow-float);z-index:50;margin-top:4px;overflow:hidden;"></div>
+                    </div>
+                </div>
+
+                <!-- 好友请求 -->
+                <div id="friendRequestsSection" style="display:none;background:var(--color-surface-soft);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-hairline-soft);">
+                    <h4 style="font:var(--text-title);color:var(--color-ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-bell" style="color:#f59e0b;"></i> 好友请求
+                    </h4>
+                    <div id="friendRequests"></div>
+                </div>
+
+                <!-- 会话列表 -->
+                <div style="background:var(--color-surface-soft);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-hairline-soft);">
+                    <h4 style="font:var(--text-title);color:var(--color-ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-comments" style="color:var(--color-primary);"></i> 最近会话
+                    </h4>
+                    <div id="conversationList"></div>
+                </div>
+
+                <!-- 好友列表 -->
+                <div style="background:var(--color-surface-soft);border-radius:var(--radius-md);padding:16px;border:1px solid var(--color-hairline-soft);">
+                    <h4 style="font:var(--text-title);color:var(--color-ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+                        <i class="fas fa-user-friends" style="color:var(--color-primary);"></i> 我的好友
+                    </h4>
+                    <div id="friendsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 登录模态框 ========== -->
+    <div id="loginModal" class="modal">
+        <div class="modal-header"><h3>登录 / 注册</h3><i class="fas fa-times" onclick="closeModal('loginModal')"></i></div>
+        <div class="modal-body">
+            <div id="loginForm">
+                <div class="form-group"><label>手机号 / 用户名</label><input type="text" id="loginUsername" placeholder="请输入手机号或用户名"></div>
+                <div class="form-group"><label>密码</label><input type="password" id="loginPassword" placeholder="请输入密码"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="doLogin()">登录</button>
+                <div style="text-align:right; margin-top:6px;">
+                    <a href="#" style="font-size:13px; color:var(--color-primary); text-decoration:none;" onclick="showResetForm();return false;">忘记密码？</a>
+                </div>
+                <hr style="margin:16px 0; border:none; border-top:1px solid var(--color-hairline-soft);">
+                <button class="btn btn-secondary" style="width:100%" onclick="showRegisterForm()">注册新账号</button>
+                <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="guestLogin()">游客体验</button>
+            </div>
+            <div id="registerForm" style="display:none">
+                <div class="form-group"><label>用户名</label><input type="text" id="regUsername" placeholder="设置用户名"></div>
+                <div class="form-group"><label>手机号</label><input type="tel" id="regPhone" placeholder="手机号"></div>
+                <div class="form-group"><label>密码</label><input type="password" id="regPassword" placeholder="设置密码"></div>
+                <div class="form-group"><label>确认密码</label><input type="password" id="regConfirmPassword" placeholder="再次输入密码"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="doRegister()">注册</button>
+                <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="showLoginForm()">返回登录</button>
+            </div>
+            <div id="resetForm" style="display:none">
+                <p style="color:var(--color-muted); font-size:14px; margin-bottom:16px;">验证用户名与手机号，重置密码</p>
+                <div class="form-group"><label>用户名</label><input type="text" id="resetUsername" placeholder="输入注册时的用户名"></div>
+                <div class="form-group"><label>手机号</label><input type="tel" id="resetPhone" placeholder="输入注册时的手机号"></div>
+                <div class="form-group"><label>新密码</label><input type="password" id="resetPassword" placeholder="设置新密码（至少6位）"></div>
+                <div class="form-group"><label>确认新密码</label><input type="password" id="resetConfirmPassword" placeholder="再次输入新密码"></div>
+                <button class="btn btn-primary" style="width:100%" onclick="doResetPassword()">重置密码</button>
+                <button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="showLoginForm()">返回登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 景点详情模态框 ========== -->
+    <div id="sceneryModal" class="modal">
+        <div class="modal-header"><h3 id="sceneryModalTitle">景点详情</h3><i class="fas fa-times" onclick="closeModal('sceneryModal')"></i></div>
+        <div class="modal-body" id="sceneryModalBody"></div>
+    </div>
+
+    <!-- ========== 行程详情模态框 ========== -->
+    <div id="travelDetailModal" class="modal">
+        <div class="modal-header">
+            <h3 id="travelDetailTitle">行程详情</h3>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-outline" style="height:32px; padding:4px 12px; font-size:12px;" onclick="exportTravelDetailAsImage()" title="导出图片"><i class="fas fa-download"></i></button>
+                <button class="btn btn-outline" style="height:32px; padding:4px 12px; font-size:12px;" onclick="showOptimizeModal()" title="AI 优化"><i class="fas fa-magic"></i></button>
+                <button class="btn btn-outline" style="height:32px; padding:4px 12px; font-size:12px;" onclick="shareTravelFromModal()" title="分享"><i class="fas fa-share-alt"></i></button>
+                <i class="fas fa-times" onclick="closeModal('travelDetailModal')"></i>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div id="travelMapContainer" style="display:none;"></div>
+            <div id="travelDetailBody" style="max-height:50vh; overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <!-- ========== AI 优化模态框 ========== -->
+    <div id="optimizeModal" class="modal" style="max-width:800px;">
+        <div class="modal-header">
+            <h3>AI 行程优化</h3>
+            <i class="fas fa-times" onclick="closeModal('optimizeModal')"></i>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom:12px;">选择优化方向：</p>
+            <div id="optimizeOptions" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+                <button class="optimize-option selected" data-type="route" onclick="selectOptimize(this)">
+                    <i class="fas fa-route"></i> 优化路线
+                </button>
+                <button class="optimize-option" data-type="budget" onclick="selectOptimize(this)">
+                    <i class="fas fa-coins"></i> 节省预算
+                </button>
+                <button class="optimize-option" data-type="attractions" onclick="selectOptimize(this)">
+                    <i class="fas fa-plus-circle"></i> 增加景点
+                </button>
+                <button class="optimize-option" data-type="family" onclick="selectOptimize(this)">
+                    <i class="fas fa-child"></i> 更适合亲子
+                </button>
+            </div>
+            <button class="btn btn-primary optimize-start-btn" style="width:100%;" onclick="startOptimization()">
+                <i class="fas fa-magic"></i> 开始优化
+            </button>
+            <div id="optimizeLoading" style="display:none; text-align:center; padding:40px;">
+                <div class="loading-spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto 12px;"></div>
+                <p style="color:var(--color-muted);">AI 正在优化行程...</p>
+            </div>
+            <div id="optimizeError" style="display:none; padding:16px; background:#fef2f2; border-radius:var(--radius-sm); color:#c13515; margin-top:12px;"></div>
+            <div id="optimizeResult" style="display:none; margin-top:16px;">
+                <div class="compare-toggle">
+                    <button class="compare-btn" onclick="showCompareTab('before')">优化前</button>
+                    <button class="compare-btn active" onclick="showCompareTab('after')">AI 优化后</button>
+                </div>
+                <div id="compareBefore" class="compare-panel"></div>
+                <div id="compareAfter" class="compare-panel active"></div>
+                <div style="display:flex; gap:8px; margin-top:16px;">
+                    <button class="btn btn-primary" style="flex:1;" onclick="acceptOptimization()">
+                        <i class="fas fa-check"></i> 采用优化
+                    </button>
+                    <button class="btn btn-outline" style="flex:1;" onclick="closeModal('optimizeModal')">
+                        <i class="fas fa-times"></i> 取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== 好友聊天模态框 ========== -->
+    <div id="chatModal" class="modal" style="max-width:420px;">
+        <div class="modal-header">
+            <h3 id="chatFriendName" style="font-size:16px;">聊天</h3>
+            <i class="fas fa-times" onclick="closeModal('chatModal')"></i>
+        </div>
+        <div class="modal-body" style="padding:0;display:flex;flex-direction:column;height:400px;">
+            <div id="chatMessagesContainer" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;"></div>
+            <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--color-hairline-soft);background:var(--color-canvas);">
+                <input type="text" id="chatMessageInput" placeholder="输入消息..." style="flex:1;border:1px solid var(--color-hairline);border-radius:var(--radius-full);padding:10px 16px;font:var(--text-body);outline:none;">
+                <button id="chatSendBtn" style="width:40px;height:40px;border-radius:50%;background:var(--gradient-primary);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局配置 -->
+    <script>
+        window.APP_CONFIG = {
+            AMAP_KEY: "243168f2be0a1866e72ee0fe4130bdbb"
+        };
+    </script>
+    <!-- 模块化 JS -->
+    <script src="/static/js/config.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/user.js"></script>
+    <script src="/static/js/scenery.js"></script>
+    <script src="/static/js/travel.js"></script>
+    <script src="/static/js/weather.js"></script>
+    <script src="/static/js/community.js"></script>
+    <script src="/static/js/stats.js"></script>
+    <script src="/static/js/optimize.js"></script>
+    <script src="/static/js/friend.js"></script>
+    <script src="/static/js/chat.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

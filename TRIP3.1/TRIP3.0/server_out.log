@@ -1,0 +1,30 @@
+============================================================
+智能旅游规划助手 - 全功能优化版
+============================================================
+[服务启动] http://localhost:8848
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8848
+ * Running on http://192.168.31.102:8848
+Press CTRL+C to quit
+127.0.0.1 - - [16/May/2026 21:11:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/config.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/scenery.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/user.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/utils.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/map.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/travel.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:55] "GET /static/js/weather.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/community.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/optimize.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/stats.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/friend.js HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/chat.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/js/main.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /api/cities HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /api/current_user HTTP/1.1" 200 -
+127.0.0.1 - - [16/May/2026 21:11:56] "GET /static/uploads/81bab075-8d52-4b25-8899-16ac867bed51_6fa8c8dc.jpg HTTP/1.1" 304 -
+127.0.0.1 - - [16/May/2026 21:11:58] "GET /api/community/stats HTTP/1.1" 200 -
